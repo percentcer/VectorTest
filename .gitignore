@@ -1,0 +1,3 @@
+*.vcxproj*
+packages.config
+Debug/*
