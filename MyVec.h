@@ -51,13 +51,13 @@ public:
 
     void Clear()
     {
-        DestroyElements();
+        DestroyElements(0, Size());
         mSize = 0;
     }
 
-    void DestroyElements()
+    void DestroyElements(size_t begin, size_t end)
     {
-        for (size_t i = 0; i < Size(); ++i)
+        for (size_t i = begin; i < end; ++i)
         {
             mBuffer[i].~T();
         }
@@ -91,7 +91,7 @@ public:
         }
 
         // kill off the old
-        DestroyElements();        
+        DestroyElements(0, Size());
         free(mRawBuffer);
 
         mBuffer    = typedIntermediateBuffer;

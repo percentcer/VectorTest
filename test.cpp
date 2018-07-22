@@ -10,7 +10,13 @@ public:
     static size_t destruction_count;
 
     DestructoType() = default;
-    ~DestructoType() { destruction_count++; }
+    ~DestructoType()
+    {
+        destruction_count++;
+        destroyed = true;
+    }
+
+    bool destroyed = false;
 };
 size_t DestructoType::destruction_count = 0; // todo why does this have to be initialized?
 
@@ -164,14 +170,6 @@ TEST_F(MyVecTest, Alignment)
     misalignmentMask = requiredAlignment - 1;
     misalignment = reinterpret_cast<uintptr_t>(&vp[0]) & misalignmentMask;
     EXPECT_EQ(misalignment, 0);
-
-    // personal type size knowledge checks
-    EXPECT_EQ(sizeof(char), 1);
-    EXPECT_EQ(sizeof(float), 4);
-    EXPECT_EQ(sizeof(double), 8);
-    EXPECT_EQ(sizeof(ThreeIntType), 12);
-    EXPECT_EQ(sizeof(PaddedType), 16);
-    EXPECT_EQ(sizeof(Pigeon), 1);
 }
 
 TEST_F(MyVecTest, CopyConstructionAndDestruction)
@@ -179,9 +177,11 @@ TEST_F(MyVecTest, CopyConstructionAndDestruction)
     static const size_t insertions = 16;
     for (size_t i = 0; i < insertions; ++i)
     {
-        vpigeons.Append(Pigeon{});
+        vpigeons.Append(Pigeon());
     }
 
+    // If the size doesn't equal the number of insertions that means
+    // we're not cleaning up destroyed pigeons correctly
     EXPECT_EQ(PigeonManager::mPigeons.size(), insertions);
 
     Pigeon* firstPigeyAddr = &vpigeons[0];
@@ -189,4 +189,26 @@ TEST_F(MyVecTest, CopyConstructionAndDestruction)
     EXPECT_TRUE(PigeonManager::IsRegistered(firstPigeyAddr));
     vpigeons.Grow(); // should invalidate all pigeon pointers
     EXPECT_FALSE(PigeonManager::IsRegistered(firstPigeyAddr));
+}
+
+TEST_F(MyVecTest, DestroyElements)
+{
+    MyVec<DestructoType> destructo;
+    static const size_t insertions = 0x10;
+    for (size_t i = 0; i < insertions; ++i)
+    {
+        destructo.Append(DestructoType());
+    }
+
+    // destroy the first half of the vector
+    destructo.DestroyElements(0, insertions >> 1);
+
+    for (size_t i = 0; i < insertions >> 1; ++i)
+    {
+        EXPECT_TRUE(destructo[i].destroyed);
+    }
+    for (size_t i = (insertions >> 1) + 1; i < destructo.Size(); ++i)
+    {
+        EXPECT_FALSE(destructo[i].destroyed);
+    }
 }
