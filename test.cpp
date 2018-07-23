@@ -100,6 +100,22 @@ TEST_F(MyVecTest, Append)
     }
 }
 
+TEST_F(MyVecTest, Insert)
+{
+    MyVec<int> expected({ -1, 0, 1, 2 });
+
+    for (size_t i = 0; i < 3; ++i)
+    {
+        v.Append(i);
+    }
+    
+    v.Insert(-1, 0);
+
+    EXPECT_TRUE(v.Size() == 4);
+    EXPECT_TRUE(v[0] == -1);
+    EXPECT_TRUE(v == expected);
+}
+
 TEST_F(MyVecTest, Clear)
 {
     MyVec<DestructoType> destructo;
@@ -211,4 +227,16 @@ TEST_F(MyVecTest, DestroyElements)
     {
         EXPECT_FALSE(destructo[i].destroyed);
     }
+}
+
+TEST_F(MyVecTest, Equality)
+{
+    MyVec<int> otherGuy;
+    for (size_t i = 0; i < 0xFF; ++i)
+    {
+        v.Append(i);
+        otherGuy.Append(i);
+    }
+
+    EXPECT_EQ(v, otherGuy);
 }

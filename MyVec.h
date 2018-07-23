@@ -30,6 +30,15 @@ public:
     {
     }
 
+    // ilist constructor helps a lot with testing
+    MyVec(std::initializer_list<T> ilist)
+    {
+        for (auto it = ilist.begin(); it != ilist.end(); ++it)
+        {
+            Append(*it);
+        }
+    }
+
     ~MyVec()
     {
         Clear();
@@ -49,6 +58,30 @@ public:
         new (&(mBuffer[mSize++])) T(element);
     }
 
+    void Insert(const T& element, size_t position)
+    {
+        if (position > Size() || position < 0)
+        {
+            // garbo value, throw it back in their face
+            throw std::range_error("insert position must be in range");
+        }
+
+        // allow for append-asserts
+        if (position == Size())
+        {
+            Append(element);
+            return;
+        }
+
+        // TODO allow for multi-inserts later, just do single value for now
+        const size_t offset = 1;
+
+        ShiftElements(position, Size(), offset);
+        new (&(mBuffer[position])) T(element);
+        
+        mSize += offset;
+    }
+
     void Clear()
     {
         DestroyElements(0, Size());
@@ -60,6 +93,41 @@ public:
         for (size_t i = begin; i < end; ++i)
         {
             mBuffer[i].~T();
+        }
+    }
+
+    void ShiftElements(size_t begin, size_t end, size_t offset)
+    {
+        if (offset < 1)
+        {
+            // TODO do we need to handle shifting left? skip for now
+            // (some time later) Yes we obviously do for deletions, duh
+            return;
+        }
+
+        if (end <= begin)
+        {
+            // wtf
+            return;
+        }
+
+        if (Size() + offset > Capacity())
+        {
+            // Make space if needed. TODO there's some optimization
+            // that could be done here to only do the shift-copy once
+            // (right now we do the grow-copy into the new buffer and
+            // then still go ahead and do the shift-copy, which is dumb)
+            Grow();
+        }
+
+        // Do this in reverse so you don't clobber stuff you want to copy later
+        // Originally was doing inequalities here but got bitten by how unsigned it was :)
+        const size_t shiftCount = end - begin;
+        for (size_t i = 0; i < shiftCount; ++i)
+        {
+            const size_t tailIdx = end - 1 - i;
+            new (&(mBuffer[tailIdx + offset])) T(mBuffer[tailIdx]);
+            mBuffer[tailIdx].~T();
         }
     }
 
@@ -115,6 +183,23 @@ public:
 
     const T& operator[](int idx) const { return mBuffer[idx]; }
           T& operator[](int idx)       { return mBuffer[idx]; }
+          
+    bool operator==(const MyVec<T>& other) const
+    {
+        if (Size() != other.Size())
+        {
+            return false;
+        }
+
+        for (size_t i = 0; i < Size(); ++i)
+        {
+            if (mBuffer[i] != other[i])
+            {
+                return false;
+            }
+        }
+        return true;
+    }
 
 private:
     T*     mBuffer    = nullptr;
