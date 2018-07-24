@@ -116,6 +116,22 @@ TEST_F(MyVecTest, Insert)
     EXPECT_TRUE(v == expected);
 }
 
+TEST_F(MyVecTest, Delete)
+{
+    MyVec<int> expected({ 0, 1, 3 });
+
+    for (size_t i = 0; i < 4; ++i)
+    {
+        v.Append(i);
+    }
+
+    v.Delete(2);
+
+    EXPECT_TRUE(v.Size() == 3);
+    EXPECT_TRUE(v[2] == 3);
+    EXPECT_TRUE(v == expected);
+}
+
 TEST_F(MyVecTest, Clear)
 {
     MyVec<DestructoType> destructo;

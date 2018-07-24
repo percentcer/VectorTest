@@ -62,7 +62,6 @@ public:
     {
         if (position > Size() || position < 0)
         {
-            // garbo value, throw it back in their face
             throw std::range_error("insert position must be in range");
         }
 
@@ -82,6 +81,22 @@ public:
         mSize += offset;
     }
 
+    void Delete(size_t position)
+    {
+        if (position > Size() || position < 0)
+        {
+            throw std::range_error("delete position must be in range");
+        }
+
+        // TODO allow for multi-deletes later, just do single value for now
+        const size_t offset = -1;
+
+        DestroyElements(position, position + 1);
+        ShiftElements(position + 1, Size(), offset);
+
+        mSize += offset;
+    }
+
     void Clear()
     {
         DestroyElements(0, Size());
@@ -98,7 +113,7 @@ public:
 
     void ShiftElements(size_t begin, size_t end, size_t offset)
     {
-        if (offset < 1)
+        if (offset == 0)
         {
             // TODO do we need to handle shifting left? skip for now
             // (some time later) Yes we obviously do for deletions, duh
@@ -122,12 +137,16 @@ public:
 
         // Do this in reverse so you don't clobber stuff you want to copy later
         // Originally was doing inequalities here but got bitten by how unsigned it was :)
-        const size_t shiftCount = end - begin;
+        const size_t shiftCount      = end - begin;
+        const size_t startingElement = (offset > 0) ? end - 1 : begin;
+        const int    advancing       = (offset > 0) ? -1      : 1;
         for (size_t i = 0; i < shiftCount; ++i)
         {
-            const size_t tailIdx = end - 1 - i;
-            new (&(mBuffer[tailIdx + offset])) T(mBuffer[tailIdx]);
-            mBuffer[tailIdx].~T();
+            // if it's a positive offset, shift from the end rightward
+            // if it's a negative offset, shift from the head leftward
+            const size_t targetIdx = startingElement + (i * advancing);
+            new (&(mBuffer[targetIdx + offset])) T(mBuffer[targetIdx]);
+            mBuffer[targetIdx].~T();
         }
     }
 
