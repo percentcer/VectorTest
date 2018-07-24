@@ -112,7 +112,6 @@ TEST_F(MyVecTest, Insert)
     v.Insert(-1, 0);
 
     EXPECT_TRUE(v.Size() == 4);
-    EXPECT_TRUE(v[0] == -1);
     EXPECT_TRUE(v == expected);
 }
 
@@ -128,7 +127,6 @@ TEST_F(MyVecTest, Delete)
     v.Delete(2);
 
     EXPECT_TRUE(v.Size() == 3);
-    EXPECT_TRUE(v[2] == 3);
     EXPECT_TRUE(v == expected);
 }
 
