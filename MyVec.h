@@ -73,12 +73,8 @@ public:
         }
 
         // TODO allow for multi-inserts later, just do single value for now
-        const size_t offset = 1;
-
-        ShiftElements(position, Size(), offset);
+        ShiftElements(position, Size(), 1);
         new (&(mBuffer[position])) T(element);
-        
-        mSize += offset;
     }
 
     void Delete(size_t position)
@@ -89,12 +85,7 @@ public:
         }
 
         // TODO allow for multi-deletes later, just do single value for now
-        const size_t offset = -1;
-
-        DestroyElements(position, position + 1);
-        ShiftElements(position + 1, Size(), offset);
-
-        mSize += offset;
+        ShiftElements(position + 1, Size(), -1);
     }
 
     void Clear()
@@ -115,8 +106,6 @@ public:
     {
         if (offset == 0)
         {
-            // TODO do we need to handle shifting left? skip for now
-            // (some time later) Yes we obviously do for deletions, duh
             return;
         }
 
@@ -142,12 +131,13 @@ public:
         const int    advancing       = (offset > 0) ? -1      : 1;
         for (size_t i = 0; i < shiftCount; ++i)
         {
-            // if it's a positive offset, shift from the end rightward
+            // if it's a positive offset, shift from the tail rightward
             // if it's a negative offset, shift from the head leftward
             const size_t targetIdx = startingElement + (i * advancing);
-            new (&(mBuffer[targetIdx + offset])) T(mBuffer[targetIdx]);
-            mBuffer[targetIdx].~T();
+            mBuffer[targetIdx + offset] = std::move(mBuffer[targetIdx]);
         }
+
+        mSize += offset;
     }
 
     void Reserve(size_t requested)
