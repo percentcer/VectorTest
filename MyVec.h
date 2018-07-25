@@ -33,6 +33,7 @@ public:
     // ilist constructor helps a lot with testing
     MyVec(std::initializer_list<T> ilist)
     {
+        Reserve(ilist.size());
         for (auto it = ilist.begin(); it != ilist.end(); ++it)
         {
             Append(*it);
